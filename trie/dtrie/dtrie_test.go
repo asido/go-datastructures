@@ -69,6 +69,11 @@ func getTest(t *testing.T, hashfunc func(interface{}) uint32, count int) {
 	}
 }
 
+func TestGetOnUnexistingKey(t *testing.T) {
+	m := New(nil)
+	assert.Nil(t, m.Get("unexisting"))
+}
+
 func TestRemove(t *testing.T) {
 	removeTest(t, defaultHasher, 10000)
 	removeTest(t, collisionHash, 1000)
