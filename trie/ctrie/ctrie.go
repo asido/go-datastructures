@@ -52,9 +52,10 @@ func defaultHashFactory() hash.Hash32 {
 // Ctrie is a concurrent, lock-free hash trie. By default, keys are hashed
 // using FNV-1a unless a HashFactory is provided to New.
 type Ctrie struct {
-	root        *iNode
-	readOnly    bool
-	hashFactory HashFactory
+	root               *iNode
+	readOnly           bool
+	hashFactory        HashFactory
+	iteratorBufferSize int
 }
 
 // generation demarcates Ctrie snapshots. We use a heap-allocated reference
@@ -266,19 +267,20 @@ type sNode struct {
 
 // New creates an empty Ctrie which uses the provided HashFactory for key
 // hashing. If nil is passed in, it will default to FNV-1a hashing.
-func New(hashFactory HashFactory) *Ctrie {
+func New(hashFactory HashFactory, iteratorBufferSize int) *Ctrie {
 	if hashFactory == nil {
 		hashFactory = defaultHashFactory
 	}
 	root := &iNode{main: &mainNode{cNode: &cNode{}}}
-	return newCtrie(root, hashFactory, false)
+	return newCtrie(root, hashFactory, false, iteratorBufferSize)
 }
 
-func newCtrie(root *iNode, hashFactory HashFactory, readOnly bool) *Ctrie {
+func newCtrie(root *iNode, hashFactory HashFactory, readOnly bool, iteratorBufferSize int) *Ctrie {
 	return &Ctrie{
-		root:        root,
-		hashFactory: hashFactory,
-		readOnly:    readOnly,
+		root:               root,
+		hashFactory:        hashFactory,
+		readOnly:           readOnly,
+		iteratorBufferSize: iteratorBufferSize,
 	}
 }
 
@@ -330,11 +332,11 @@ func (c *Ctrie) snapshot(readOnly bool) *Ctrie {
 			if readOnly {
 				// For a read-only snapshot, we can share the old generation
 				// root.
-				return newCtrie(root, c.hashFactory, readOnly)
+				return newCtrie(root, c.hashFactory, readOnly, c.iteratorBufferSize)
 			}
 			// For a read-write snapshot, we need to take a copy of the root
 			// in the new generation.
-			return newCtrie(c.readRoot().copyToGen(&generation{}, c), c.hashFactory, readOnly)
+			return newCtrie(c.readRoot().copyToGen(&generation{}, c), c.hashFactory, readOnly, c.iteratorBufferSize)
 		}
 	}
 }
@@ -359,7 +361,7 @@ func (c *Ctrie) Clear() {
 // channel. Note that if a cancel channel is not used and not every entry is
 // read from the iterator, a goroutine will leak.
 func (c *Ctrie) Iterator(cancel <-chan struct{}) <-chan *Entry {
-	ch := make(chan *Entry)
+	ch := make(chan *Entry, c.iteratorBufferSize)
 	snapshot := c.ReadOnlySnapshot()
 	go func() {
 		snapshot.traverse(snapshot.readRoot(), ch, cancel)

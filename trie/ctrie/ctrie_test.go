@@ -29,7 +29,7 @@ import (
 
 func TestCtrie(t *testing.T) {
 	assert := assert.New(t)
-	ctrie := New(nil)
+	ctrie := New(nil, 1)
 
 	_, ok := ctrie.Lookup([]byte("foo"))
 	assert.False(ok)
@@ -94,7 +94,7 @@ func mockHashFactory() hash.Hash32 {
 
 func TestInsertLNode(t *testing.T) {
 	assert := assert.New(t)
-	ctrie := New(mockHashFactory)
+	ctrie := New(mockHashFactory, 1)
 
 	for i := 0; i < 10; i++ {
 		ctrie.Insert([]byte(strconv.Itoa(i)), i)
@@ -117,7 +117,7 @@ func TestInsertLNode(t *testing.T) {
 
 func TestInsertTNode(t *testing.T) {
 	assert := assert.New(t)
-	ctrie := New(nil)
+	ctrie := New(nil, 1)
 
 	for i := 0; i < 10000; i++ {
 		ctrie.Insert([]byte(strconv.Itoa(i)), i)
@@ -140,7 +140,7 @@ func TestInsertTNode(t *testing.T) {
 
 func TestConcurrency(t *testing.T) {
 	assert := assert.New(t)
-	ctrie := New(nil)
+	ctrie := New(nil, 1)
 	var wg sync.WaitGroup
 	wg.Add(2)
 
@@ -171,7 +171,7 @@ func TestConcurrency(t *testing.T) {
 
 func TestConcurrency2(t *testing.T) {
 	assert := assert.New(t)
-	ctrie := New(nil)
+	ctrie := New(nil, 1)
 	var wg sync.WaitGroup
 	wg.Add(4)
 
@@ -212,7 +212,7 @@ func TestConcurrency2(t *testing.T) {
 
 func TestSnapshot(t *testing.T) {
 	assert := assert.New(t)
-	ctrie := New(nil)
+	ctrie := New(nil, 1)
 	for i := 0; i < 100; i++ {
 		ctrie.Insert([]byte(strconv.Itoa(i)), i)
 	}
@@ -239,7 +239,7 @@ func TestSnapshot(t *testing.T) {
 	}
 
 	// New Ctrie and snapshot.
-	ctrie = New(nil)
+	ctrie = New(nil, 1)
 	for i := 0; i < 100; i++ {
 		ctrie.Insert([]byte(strconv.Itoa(i)), i)
 	}
@@ -288,7 +288,7 @@ func TestSnapshot(t *testing.T) {
 
 func TestReadOnlySnapshot(t *testing.T) {
 	assert := assert.New(t)
-	ctrie := New(nil)
+	ctrie := New(nil, 1)
 	for i := 0; i < 100; i++ {
 		ctrie.Insert([]byte(strconv.Itoa(i)), i)
 	}
@@ -343,7 +343,7 @@ func TestReadOnlySnapshot(t *testing.T) {
 
 func TestIterator(t *testing.T) {
 	assert := assert.New(t)
-	ctrie := New(nil)
+	ctrie := New(nil, 1)
 	for i := 0; i < 10; i++ {
 		ctrie.Insert([]byte(strconv.Itoa(i)), i)
 	}
@@ -391,7 +391,7 @@ func TestIterator(t *testing.T) {
 // TestIteratorCoversTNodes reproduces the scenario of a bug where tNodes weren't being traversed.
 func TestIteratorCoversTNodes(t *testing.T) {
 	assert := assert.New(t)
-	ctrie := New(mockHashFactory)
+	ctrie := New(mockHashFactory, 1)
 	// Add a pair of keys that collide (because we're using the mock hash).
 	ctrie.Insert([]byte("a"), true)
 	ctrie.Insert([]byte("b"), true)
@@ -407,7 +407,7 @@ func TestIteratorCoversTNodes(t *testing.T) {
 }
 
 func TestSize(t *testing.T) {
-	ctrie := New(nil)
+	ctrie := New(nil, 1)
 	for i := 0; i < 10; i++ {
 		ctrie.Insert([]byte(strconv.Itoa(i)), i)
 	}
@@ -416,7 +416,7 @@ func TestSize(t *testing.T) {
 
 func TestClear(t *testing.T) {
 	assert := assert.New(t)
-	ctrie := New(nil)
+	ctrie := New(nil, 1)
 	for i := 0; i < 10; i++ {
 		ctrie.Insert([]byte(strconv.Itoa(i)), i)
 	}
@@ -460,7 +460,7 @@ func factory() hash.Hash32 {
 }
 
 func TestHashCollision(t *testing.T) {
-	trie := New(factory)
+	trie := New(factory, 1)
 	trie.Insert([]byte("foobar"), 1)
 	trie.Insert([]byte("zogzog"), 2)
 	trie.Insert([]byte("foobar"), 3)
@@ -475,7 +475,7 @@ func TestHashCollision(t *testing.T) {
 }
 
 func BenchmarkInsert(b *testing.B) {
-	ctrie := New(nil)
+	ctrie := New(nil, 1)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		ctrie.Insert([]byte("foo"), 0)
@@ -484,7 +484,7 @@ func BenchmarkInsert(b *testing.B) {
 
 func BenchmarkLookup(b *testing.B) {
 	numItems := 1000
-	ctrie := New(nil)
+	ctrie := New(nil, 1)
 	for i := 0; i < numItems; i++ {
 		ctrie.Insert([]byte(strconv.Itoa(i)), i)
 	}
@@ -498,7 +498,7 @@ func BenchmarkLookup(b *testing.B) {
 
 func BenchmarkRemove(b *testing.B) {
 	numItems := 1000
-	ctrie := New(nil)
+	ctrie := New(nil, 1)
 	for i := 0; i < numItems; i++ {
 		ctrie.Insert([]byte(strconv.Itoa(i)), i)
 	}
@@ -512,7 +512,7 @@ func BenchmarkRemove(b *testing.B) {
 
 func BenchmarkSnapshot(b *testing.B) {
 	numItems := 1000
-	ctrie := New(nil)
+	ctrie := New(nil, 1)
 	for i := 0; i < numItems; i++ {
 		ctrie.Insert([]byte(strconv.Itoa(i)), i)
 	}
@@ -525,7 +525,7 @@ func BenchmarkSnapshot(b *testing.B) {
 
 func BenchmarkReadOnlySnapshot(b *testing.B) {
 	numItems := 1000
-	ctrie := New(nil)
+	ctrie := New(nil, 1)
 	for i := 0; i < numItems; i++ {
 		ctrie.Insert([]byte(strconv.Itoa(i)), i)
 	}
