@@ -80,10 +80,7 @@ func (d *Dtrie) Size() (size int) {
 // Get returns the value for the associated key or returns nil if the
 // key does not exist.
 func (d *Dtrie) Get(key interface{}) interface{} {
-	if e := get(d.root, d.hasher(key), key); e != nil {
-		return e.Value()
-	}
-	return nil
+	return get(d.root, d.hasher(key), key).Value()
 }
 
 // Insert adds a key value pair to the Dtrie, replacing the existing value if
